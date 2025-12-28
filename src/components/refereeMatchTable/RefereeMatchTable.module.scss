@@ -70,6 +70,18 @@
   font-size: 1.1rem;
 }
 
+.walkoverBadge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background-color: #ff9800;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 .scoreInputs {
   display: flex;
   align-items: center;
@@ -168,4 +180,4 @@
     flex-direction: column;
     gap: 0.25rem;
   }
-} 
+}

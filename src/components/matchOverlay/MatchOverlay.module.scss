@@ -9,7 +9,7 @@
     flex-direction: column;
     justify-content: space-between;
     padding: 1rem;
-    
+
     .scoreContainer {
         position: relative;
         width: 500px;
@@ -17,12 +17,12 @@
         margin-top: 0rem;
         margin-left: 0rem;
         // margin-bottom: 3rem;
-        
+
         .scoreBg {
             object-fit: contain;
             z-index: 1;
         }
-        
+
         .scoreContent {
             position: relative;
             z-index: 2;
@@ -33,13 +33,13 @@
             align-items: center;
             padding-top: 1.5rem;
             padding-left: 0.6rem;
-            
+
             .score {
                 display: flex;
                 align-items: center;
                 gap: 1rem;
                 margin-bottom: 1rem;
-                
+
                 .scoreValue {
                     font-size: 2rem;
                     font-weight: bold;
@@ -47,7 +47,7 @@
                     min-width: 70px;
                     text-align: center;
                 }
-                
+
                 .teamId {
                     font-size: 2rem;
                     opacity: 0.9;
@@ -56,29 +56,63 @@
                     text-align: center;
                 }
             }
-            
+
             .matchInfo {
                 display: flex;
                 gap: 1rem;
                 font-size: 1.2rem;
                 color: white;
-                
+
                 .pool, .roundName {
                     opacity: 0.9;
                 }
             }
+
+            .walkoverDisplay {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 1rem;
+
+                .walkoverBadge {
+                    display: inline-block;
+                    padding: 0.5rem 1.5rem;
+                    border-radius: 25px;
+                    font-size: 1.2rem;
+                    font-weight: 700;
+                    background-color: #ff9800;
+                    color: white;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+                }
+
+                .winnerInfo {
+                    font-size: 1.5rem;
+                    font-weight: bold;
+                    color: white;
+                    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+                }
+
+                .walkoverReason {
+                    font-size: 1rem;
+                    color: white;
+                    opacity: 0.9;
+                    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+                }
+            }
         }
     }
-    
+
     .logos {
         display: flex;
         justify-content: space-between;
         align-items: flex-end;
-        
+
         .khelClubLogo, .streamingLogo {
             img {
                 object-fit: contain;
             }
         }
     }
-} 
+}

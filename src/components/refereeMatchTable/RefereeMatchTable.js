@@ -47,14 +47,14 @@ const RefereeMatchTable = ({ tournamentId }) => {
           status: "on-going"
         }
       });
-      
+
       // Update local state
-      setMatches(matches.map(m => 
-        m.match_id === match.match_id 
-          ? { ...m, match_status: { ...m.match_status, status: 'on-going' }} 
+      setMatches(matches.map(m =>
+        m.match_id === match.match_id
+          ? { ...m, match_status: { ...m.match_status, status: 'on-going' }}
           : m
       ));
-      
+
       toast.success("Match started successfully");
     } catch (error) {
       console.error("Failed to start match:", error);
@@ -80,7 +80,7 @@ const RefereeMatchTable = ({ tournamentId }) => {
         body: JSON.stringify(requestBody),
       });
 
-      const statusPromise = isFinal ? 
+      const statusPromise = isFinal ?
         apiCall(`${endpoints.updateMatchStatus}/${match.match_id}`, {
           method: "POST",
           body: {
@@ -108,7 +108,7 @@ const RefereeMatchTable = ({ tournamentId }) => {
           return {
             ...m,
             match_result: `${scores.team1Score}-${scores.team2Score}`,
-            match_status: isFinal 
+            match_status: isFinal
               ? { ...m.match_status, status: 'completed', is_final: true }
               : m.match_status
           };
@@ -189,7 +189,20 @@ const RefereeMatchTable = ({ tournamentId }) => {
                       />
                     </div>
                   ) : (
-                    match.match_result
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      {match.result_type === 'walkover' ? (
+                        <>
+                          <span className={stl.walkoverBadge}>WALKOVER</span>
+                          {match.walkover_reason && (
+                            <span style={{ fontSize: '0.85rem', color: '#666' }}>
+                              ({match.walkover_reason})
+                            </span>
+                          )}
+                        </>
+                      ) : (
+                        <span>{match.match_result || '-'}</span>
+                      )}
+                    </div>
                   )}
                 </td>
                 <td>
@@ -199,7 +212,7 @@ const RefereeMatchTable = ({ tournamentId }) => {
                 </td>
                 <td>
                   {match.match_status.status === 'pending' && (
-                    <button 
+                    <button
                       onClick={() => handleStartMatchClick(match)}
                       className={stl.startButton}
                     >
@@ -209,19 +222,19 @@ const RefereeMatchTable = ({ tournamentId }) => {
                   {match.match_status.status === 'on-going' && (
                     editingMatch?.match_id === match.match_id ? (
                       <div className={stl.actionButtons}>
-                        <button 
+                        <button
                           onClick={() => handleScoreUpdate(match)}
                           className={stl.updateButton}
                         >
                           Update
                         </button>
-                        <button 
+                        <button
                           onClick={() => handleScoreUpdate(match, true)}
                           className={stl.finalizeButton}
                         >
                           Finalize
                         </button>
-                        <button 
+                        <button
                           onClick={() => setEditingMatch(null)}
                           className={stl.cancelButton}
                         >
@@ -229,7 +242,7 @@ const RefereeMatchTable = ({ tournamentId }) => {
                         </button>
                       </div>
                     ) : (
-                      <button 
+                      <button
                         onClick={() => handleEditClick(match)}
                         className={stl.editButton}
                       >
@@ -238,7 +251,7 @@ const RefereeMatchTable = ({ tournamentId }) => {
                     )
                   )}
                   {match.match_status.status === 'completed' && (
-                    <button 
+                    <button
                       onClick={() => handleEditClick(match)}
                       className={stl.editButton}
                     >
@@ -252,8 +265,8 @@ const RefereeMatchTable = ({ tournamentId }) => {
         </table>
       </div>
 
-      <Dialog 
-        open={showStatusModal} 
+      <Dialog
+        open={showStatusModal}
         onClose={() => setShowStatusModal(false)}
       >
         <DialogTitle>
@@ -267,14 +280,14 @@ const RefereeMatchTable = ({ tournamentId }) => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button 
+          <Button
             onClick={() => setShowStatusModal(false)}
             style={{ color: '#F28C28' }}
           >
             Cancel
           </Button>
           {modalType === 'start' ? (
-            <Button 
+            <Button
               onClick={() => {
                 handleStartMatch(selectedMatch);
                 setShowStatusModal(false);
@@ -284,7 +297,7 @@ const RefereeMatchTable = ({ tournamentId }) => {
               Start Match
             </Button>
           ) : (
-            <Button 
+            <Button
               onClick={() => {
                 const [team1Score, team2Score] = selectedMatch.match_result.split('-').map(Number);
                 setScores({ team1Score: team1Score || 0, team2Score: team2Score || 0 });
@@ -302,4 +315,4 @@ const RefereeMatchTable = ({ tournamentId }) => {
   );
 };
 
-export default RefereeMatchTable; 
+export default RefereeMatchTable;

@@ -65,10 +65,10 @@ const TournamentFixtures = ({ tournamentId, totalRounds }) => {
         getFilteredMatches,
         handleRoundClick,
         handlePoolClick
-    } = BaseFixtures({ 
-        tournamentId, 
+    } = BaseFixtures({
+        tournamentId,
         totalRounds,
-        showCourtInfo: true 
+        showCourtInfo: true
     });
 
     const getAvailableCourts = () => {
@@ -107,7 +107,7 @@ const TournamentFixtures = ({ tournamentId, totalRounds }) => {
 
     const renderMatches = (matches = []) => {
         if (!Array.isArray(matches)) return null;
-        
+
         return matches.map((match) => (
             <div
                 key={match.match_id}
@@ -146,6 +146,14 @@ const TournamentFixtures = ({ tournamentId, totalRounds }) => {
                     <span className={`${styles.status} ${styles[match.status]}`}>
                         {match.status.charAt(0).toUpperCase() + match.status.slice(1)}
                     </span>
+                    {match.result_type === 'walkover' && (
+                        <div className={styles.walkoverIndicator}>
+                            <span className={styles.walkoverBadge}>WALKOVER</span>
+                            {match.walkover_reason && (
+                                <span className={styles.walkoverReason}>({match.walkover_reason})</span>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
         ));
@@ -189,12 +197,12 @@ const TournamentFixtures = ({ tournamentId, totalRounds }) => {
                 <div className={styles.knockoutContainer}>
                     {knockoutMatches.length > 0 ? (
                         knockoutView === 'default' ? (
-                            <KnockoutBracket 
-                                matches={knockoutMatches} 
+                            <KnockoutBracket
+                                matches={knockoutMatches}
                             />
                         ) : (
-                            <KnockoutBracket2 
-                                matches={knockoutMatches} 
+                            <KnockoutBracket2
+                                matches={knockoutMatches}
                             />
                         )
                     ) : (
@@ -317,4 +325,4 @@ const TournamentFixtures = ({ tournamentId, totalRounds }) => {
     );
 };
 
-export default TournamentFixtures; 
+export default TournamentFixtures;

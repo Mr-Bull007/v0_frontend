@@ -98,6 +98,18 @@
   font-size: 1.1rem;
 }
 
+.walkoverBadge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background-color: #ff9800;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 @media (max-width: 768px) {
   .container {
     padding: 0.5rem;
@@ -109,4 +121,4 @@
       font-size: 0.9rem;
     }
   }
-} 
+}

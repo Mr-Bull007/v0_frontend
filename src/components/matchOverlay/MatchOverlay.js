@@ -112,7 +112,7 @@ const MatchOverlay = ({ matchId, tournamentId }) => {
         }
 
         console.log('🚀 Initializing MatchOverlay:', { matchId, tournamentId });
-        
+
         // Fetch initial data
         fetchMatch();
 
@@ -143,25 +143,39 @@ const MatchOverlay = ({ matchId, tournamentId }) => {
     return (
         <div className={stl.overlay}>
             <div className={stl.scoreContainer}>
-                <Image 
+                <Image
                     src="/score_bg.png"
                     alt="Score Background"
                     fill
                     className={stl.scoreBg}
                 />
                 <div className={stl.scoreContent}>
-                    <div className={stl.score}>
-                        <span className={stl.teamId}>T{scoreData.team1?.team_id}</span>
-                        <span className={stl.scoreValue}>{scoreData.team1?.score || '0'}</span>
-                        <span className={stl.scoreValue}>{scoreData.team2?.score || '0'}</span>
-                        <span className={stl.teamId}>T{scoreData.team2?.team_id}</span>
-                    </div>
+                    {scoreData.result_type === 'walkover' ? (
+                        <div className={stl.walkoverDisplay}>
+                            <div className={stl.walkoverBadge}>WALKOVER</div>
+                            <div className={stl.winnerInfo}>
+                                Winner: T{scoreData.winner_team_id}
+                            </div>
+                            {scoreData.walkover_reason && (
+                                <div className={stl.walkoverReason}>
+                                    Reason: {scoreData.walkover_reason}
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <div className={stl.score}>
+                            <span className={stl.teamId}>T{scoreData.team1?.team_id}</span>
+                            <span className={stl.scoreValue}>{scoreData.team1?.score || '0'}</span>
+                            <span className={stl.scoreValue}>{scoreData.team2?.score || '0'}</span>
+                            <span className={stl.teamId}>T{scoreData.team2?.team_id}</span>
+                        </div>
+                    )}
                 </div>
             </div>
 
             <div className={stl.logos}>
                 <div className={stl.khelClubLogo}>
-                    <Image 
+                    <Image
                         src="/logo.png"
                         alt="Khel Club Logo"
                         width={80}
@@ -169,7 +183,7 @@ const MatchOverlay = ({ matchId, tournamentId }) => {
                     />
                 </div>
                 <div className={stl.streamingLogo}>
-                    <Image 
+                    <Image
                         src="/sportvot.png"
                         alt="Sportvot"
                         width={150}
@@ -181,4 +195,4 @@ const MatchOverlay = ({ matchId, tournamentId }) => {
     );
 };
 
-export default MatchOverlay; 
+export default MatchOverlay;

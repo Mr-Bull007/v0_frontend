@@ -174,6 +174,16 @@ const LandingScreen = () => {
                         View Tournament
                     </button>
                 </form>
+
+                <div className={stl.navigationLinks}>
+                    <button
+                        type="button"
+                        className={stl.navButton}
+                        onClick={() => router.push('/referee')}
+                    >
+                        Go to Referee Portal
+                    </button>
+                </div>
             </div>
         </div>
     );

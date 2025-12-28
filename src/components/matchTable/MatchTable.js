@@ -70,7 +70,11 @@ const MatchTable = ({ tournamentId }) => {
       link.setAttribute('download', `tournament_${tournamentId}_matches.csv`);
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
+      // Clean up: remove link and revoke URL
+      if (link.parentNode) {
+        document.body.removeChild(link);
+      }
+      URL.revokeObjectURL(url);
       toast.success('CSV file downloaded successfully');
     } catch (error) {
       console.error('Failed to export CSV:', error);
@@ -110,7 +114,22 @@ const MatchTable = ({ tournamentId }) => {
                 <td>{match.pool || '-'}</td>
                 <td>{match.team1_players}</td>
                 <td>{match.team2_players}</td>
-                <td>{match.match_result}</td>
+                <td>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    {match.result_type === 'walkover' ? (
+                      <>
+                        <span className={stl.walkoverBadge}>WALKOVER</span>
+                        {match.walkover_reason && (
+                          <span style={{ fontSize: '0.85rem', color: '#666' }}>
+                            ({match.walkover_reason})
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      <span>{match.match_result || '-'}</span>
+                    )}
+                  </div>
+                </td>
                 <td>
                   <span className={`${stl.status} ${stl[match.match_status.status]}`}>
                     {match.match_status.status}
@@ -125,4 +144,4 @@ const MatchTable = ({ tournamentId }) => {
   );
 };
 
-export default MatchTable; 
+export default MatchTable;

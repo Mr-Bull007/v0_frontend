@@ -9,12 +9,12 @@ import { useRouter } from 'next/navigation';
 import KnockoutBracket from './KnockoutBracket';
 
 
-const Fixtures = ({ 
-    matches: externalMatches, 
+const Fixtures = ({
+    matches: externalMatches,
     tournamentId,
-    onMatchClick, 
-    showCourtInfo = false, 
-    selectedPool, 
+    onMatchClick,
+    showCourtInfo = false,
+    selectedPool,
     onPoolChange,
     selectedRound,
     onRoundChange,
@@ -47,7 +47,7 @@ const Fixtures = ({
             setMatches(externalMatches);
             return;
         }
-        
+
         if (tournamentId) {
             fetchMatches();
         }
@@ -65,7 +65,7 @@ const Fixtures = ({
 
     const parseMatchResult = (result) => {
         if (!result) return { team1Score: 0, team2Score: 0 };
-        
+
         const scores = result.split('-').map(Number);
         return {
             team1Score: scores[0] || 0,
@@ -79,7 +79,7 @@ const Fixtures = ({
             const url = `${endpoints.getFixtures}?tournament_id=${tournamentId}`;
             console.log('Fetching matches from:', url);
             const response = await apiCall(url);
-            
+
             if (response && response.matches) {
                 // Transform the matches data
                 const transformedData = {};
@@ -104,7 +104,7 @@ const Fixtures = ({
                             pools: {}
                         };
                     }
-                    
+
                     const poolId = match.pool || 'unassigned';
                     if (!transformedData[roundId].pools[poolId]) {
                         transformedData[roundId].pools[poolId] = [];
@@ -122,7 +122,7 @@ const Fixtures = ({
                         team2_checked_in: match.team2?.checked_in
                     });
                 });
-                
+
                 setMatches(transformedData);
                 setKnockoutMatches(knockoutMatchesArray);
             }
@@ -152,7 +152,7 @@ const Fixtures = ({
 
     const getFilteredMatches = () => {
         if (!matches || !effectiveSelectedRound) return [];
-        
+
         const roundData = matches[effectiveSelectedRound];
         if (!roundData?.pools) return [];
 
@@ -189,7 +189,7 @@ const Fixtures = ({
     const getMatchesGroupedByCourt = () => {
         const matches = getFilteredMatches();
         const groupedMatches = {};
-        
+
         matches.forEach(match => {
             if (match.court_number) {
                 if (!groupedMatches[match.court_number]) {
@@ -325,6 +325,14 @@ const Fixtures = ({
                         <span className={styles.pool}>Pool: {match.pool}</span>
                         <span className={styles.round}>{match.round_name}</span>
                         {match.court_number && <span className={styles.courtAssigned}>Court: {match.court_number}</span>}
+                        {match.result_type === 'walkover' && (
+                            <div className={styles.walkoverIndicator}>
+                                <span className={styles.walkoverBadge}>WALKOVER</span>
+                                {match.walkover_reason && (
+                                    <span className={styles.walkoverReason}>({match.walkover_reason})</span>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
             ));
@@ -513,16 +521,16 @@ const Fixtures = ({
                             )}
 
                             <div className={styles.matchesContainer}>
-                                {groupByCourt 
+                                {groupByCourt
                                     ? renderGroupedMatches(filteredMatches)
                                     : renderMatches(filteredMatches)}
                             </div>
                         </>
                     ) : (
                         <div className={styles.knockoutContainer}>
-                            <KnockoutBracket 
-                                matches={knockoutMatches} 
-                                onMatchClick={handleMatchClick} 
+                            <KnockoutBracket
+                                matches={knockoutMatches}
+                                onMatchClick={handleMatchClick}
                             />
                         </div>
                     )}

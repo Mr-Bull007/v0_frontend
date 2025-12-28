@@ -17,6 +17,8 @@ const MatchScreen = ({ tournamentId, matchId }) => {
     const [loading, setLoading] = useState(false);
     const [isModalOpen, setModalOpen] = useState(false);
     const [showStatusModal, setShowStatusModal] = useState(false);
+    const [showWalkoverModal, setShowWalkoverModal] = useState(false);
+    const [walkoverData, setWalkoverData] = useState({ winnerTeamId: '', reason: '' });
     const [matchStatus, setMatchStatus] = useState(null);
     const router = useRouter();
 
@@ -34,13 +36,13 @@ const MatchScreen = ({ tournamentId, matchId }) => {
                     tournament_id: tournamentId,
                 },
             });
-            
+
             if (!response) {
                 throw new Error("Failed to fetch match details");
             }
 
             setMatchStatus(response.status || 'pending');
-            
+
             if (response.status === 'completed') {
                 setShowStatusModal(true);
             } else if (response.status === 'pending') {
@@ -53,6 +55,14 @@ const MatchScreen = ({ tournamentId, matchId }) => {
             }
             if (response.team2?.score !== undefined) {
                 formik.setFieldValue("team2Score", response.team2.score);
+            }
+
+            // If match is already a walkover, populate walkover data
+            if (response.result_type === 'walkover') {
+                setWalkoverData({
+                    winnerTeamId: response.winner_team_id || '',
+                    reason: response.walkover_reason || ''
+                });
             }
         } catch (error) {
             console.error("Failed to fetch Score:", error.message);
@@ -110,7 +120,7 @@ const MatchScreen = ({ tournamentId, matchId }) => {
                 body: JSON.stringify(requestBody),
             });
 
-            const statusPromise = isFinal ? 
+            const statusPromise = isFinal ?
                 apiCall(`${endpoints.updateMatchStatus}/${matchId}`, {
                     method: "POST",
                     body: {
@@ -147,7 +157,7 @@ const MatchScreen = ({ tournamentId, matchId }) => {
                 toast.success(resp.message);
                 formik.setFieldValue("team1Score", resp.team1_score);
                 formik.setFieldValue("team2Score", resp.team2_score);
-                
+
                 if (isFinal && resp.winner_team_id) {
                     setScoreData(prev => ({
                         ...prev,
@@ -155,7 +165,7 @@ const MatchScreen = ({ tournamentId, matchId }) => {
                     }));
                     setMatchStatus('completed');
                 }
-                
+
                 if (isFinal) {
                     router.push(`/referee/${tournamentId}/matches`);
                 }
@@ -184,7 +194,7 @@ const MatchScreen = ({ tournamentId, matchId }) => {
                     status: "on-going"
                 }
             });
-            
+
             setMatchStatus('on-going');
             setShowStatusModal(false);
             toast.success("Match started successfully");
@@ -196,6 +206,61 @@ const MatchScreen = ({ tournamentId, matchId }) => {
 
     const handleBackToMatches = () => {
         router.push(`/referee/${tournamentId}/matches`);
+    };
+
+    const handleWalkoverSubmit = async () => {
+        if (!walkoverData.winnerTeamId) {
+            toast.error('Please select a winning team');
+            return;
+        }
+
+        try {
+            const requestBody = {
+                tournament_id: tournamentId,
+                match_id: matchId,
+                result_type: 'walkover',
+                winner_team_id: walkoverData.winnerTeamId,
+                walkover_reason: walkoverData.reason || null
+            };
+
+            const response = await fetch(endpoints.updateMatchScore, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(requestBody),
+            });
+
+            const resp = await response.json();
+
+            if (!response.ok) {
+                toast.error(resp.error || 'Failed to record walkover');
+                return;
+            }
+
+            toast.success('Walkover recorded successfully');
+            setShowWalkoverModal(false);
+
+            // Update match status
+            await apiCall(`${endpoints.updateMatchStatus}/${matchId}`, {
+                method: "POST",
+                body: {
+                    tournament_id: tournamentId,
+                    status: "completed"
+                }
+            });
+
+            // Refresh match data
+            await getScores();
+
+            // Navigate back after a short delay
+            setTimeout(() => {
+                router.push(`/referee/${tournamentId}/matches`);
+            }, 1500);
+        } catch (error) {
+            console.error("Failed to record walkover:", error);
+            toast.error("Failed to record walkover. Please try again.");
+        }
     };
 
     if (loading) {
@@ -222,6 +287,21 @@ const MatchScreen = ({ tournamentId, matchId }) => {
                         {matchStatus ? matchStatus.charAt(0).toUpperCase() + matchStatus.slice(1) : 'Unknown'}
                     </span>
                 </div>
+                {scoreData?.result_type === 'walkover' && (
+                    <div className={stl.infoItem} style={{ backgroundColor: '#fff3e0', padding: '0.5rem', borderRadius: '4px', marginTop: '0.5rem' }}>
+                        <span className={stl.label} style={{ color: '#ff9800', fontWeight: 'bold' }}>WALKOVER</span>
+                        {scoreData.walkover_reason && (
+                            <span className={stl.value} style={{ marginLeft: '0.5rem' }}>
+                                Reason: {scoreData.walkover_reason}
+                            </span>
+                        )}
+                        {scoreData.winner_team_id && (
+                            <span className={stl.value} style={{ marginLeft: '0.5rem' }}>
+                                Winner: Team {scoreData.winner_team_id}
+                            </span>
+                        )}
+                    </div>
+                )}
                 <div className={stl.infoItem}>
                     <span className={stl.label}>Tournament ID:</span>
                     <span className={stl.value}>{tournamentId}</span>
@@ -232,34 +312,61 @@ const MatchScreen = ({ tournamentId, matchId }) => {
                 </div>
             </div>
 
-            <form onSubmit={formik.handleSubmit} className={stl.scoreForm}>
-                <div className={stl.teams}>
-                    <TeamCard
-                        team={scoreData.team1}
-                        players={scoreData.team1?.players || []}
-                        onScoreChange={(change) => handleScoreChange("team1", change)}
-                        onReset={() => resetScore("team1")}
-                        formik={formik}
-                        teamName="team1Score"
-                    />
-
-                    <div className={stl.vs}>VS</div>
-
-                    <TeamCard
-                        team={scoreData.team2}
-                        players={scoreData.team2?.players || []}
-                        onScoreChange={(change) => handleScoreChange("team2", change)}
-                        onReset={() => resetScore("team2")}
-                        formik={formik}
-                        teamName="team2Score"
-                    />
+            {scoreData?.result_type === 'walkover' ? (
+                <div className={stl.walkoverDisplay} style={{
+                    padding: '2rem',
+                    textAlign: 'center',
+                    backgroundColor: '#fff3e0',
+                    borderRadius: '8px',
+                    marginTop: '1rem'
+                }}>
+                    <h3 style={{ color: '#ff9800', marginBottom: '1rem' }}>This match was recorded as a WALKOVER</h3>
+                    <p style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+                        <strong>Winner:</strong> Team {scoreData.winner_team_id}
+                    </p>
+                    {scoreData.walkover_reason && (
+                        <p style={{ fontSize: '1rem', color: '#666' }}>
+                            <strong>Reason:</strong> {scoreData.walkover_reason}
+                        </p>
+                    )}
                 </div>
+            ) : (
+                <form onSubmit={formik.handleSubmit} className={stl.scoreForm}>
+                    <div className={stl.teams}>
+                        <TeamCard
+                            team={scoreData.team1}
+                            players={scoreData.team1?.players || []}
+                            onScoreChange={(change) => handleScoreChange("team1", change)}
+                            onReset={() => resetScore("team1")}
+                            formik={formik}
+                            teamName="team1Score"
+                        />
 
-                <div className={stl.actions}>
-                    <button type="button" onClick={() => updateScore(false)}>Update</button>
-                    <button type="button" onClick={finalizeScore}>Final</button>
-                </div>
-            </form>
+                        <div className={stl.vs}>VS</div>
+
+                        <TeamCard
+                            team={scoreData.team2}
+                            players={scoreData.team2?.players || []}
+                            onScoreChange={(change) => handleScoreChange("team2", change)}
+                            onReset={() => resetScore("team2")}
+                            formik={formik}
+                            teamName="team2Score"
+                        />
+                    </div>
+
+                    <div className={stl.actions}>
+                        <button type="button" onClick={() => updateScore(false)}>Update</button>
+                        <button type="button" onClick={finalizeScore}>Final</button>
+                        <button
+                            type="button"
+                            onClick={() => setShowWalkoverModal(true)}
+                            style={{ backgroundColor: '#ff9800', color: 'white' }}
+                        >
+                            Mark as Walkover
+                        </button>
+                    </div>
+                </form>
+            )}
 
             {isModalOpen && (
                 <div className={stl.modal}>
@@ -271,8 +378,8 @@ const MatchScreen = ({ tournamentId, matchId }) => {
                 </div>
             )}
 
-            <Dialog 
-                open={showStatusModal} 
+            <Dialog
+                open={showStatusModal}
                 onClose={handleBackToMatches}
             >
                 <DialogTitle>
@@ -286,27 +393,88 @@ const MatchScreen = ({ tournamentId, matchId }) => {
                     )}
                 </DialogContent>
                 <DialogActions>
-                    <Button 
+                    <Button
                         onClick={handleBackToMatches}
                         style={{ color: '#F28C28' }}
                     >
                         Cancel
                     </Button>
                     {matchStatus === 'completed' ? (
-                        <Button 
+                        <Button
                             onClick={() => setShowStatusModal(false)}
                             style={{ color: '#4CAF50' }}
                         >
                             Override Score
                         </Button>
                     ) : (
-                        <Button 
+                        <Button
                             onClick={handleStartMatch}
                             style={{ color: '#4CAF50' }}
                         >
                             Start Match
                         </Button>
                     )}
+                </DialogActions>
+            </Dialog>
+
+            <Dialog
+                open={showWalkoverModal}
+                onClose={() => setShowWalkoverModal(false)}
+                maxWidth="sm"
+                fullWidth
+            >
+                <DialogTitle>Mark Match as Walkover</DialogTitle>
+                <DialogContent>
+                    <div style={{ marginTop: '1rem', marginBottom: '1rem' }}>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+                            Select Winning Team:
+                        </label>
+                        <select
+                            value={walkoverData.winnerTeamId}
+                            onChange={(e) => setWalkoverData({ ...walkoverData, winnerTeamId: e.target.value })}
+                            style={{ width: '100%', padding: '0.5rem', fontSize: '1rem', border: '1px solid #ddd', borderRadius: '4px' }}
+                        >
+                            <option value="">-- Select Team --</option>
+                            {scoreData?.team1?.team_id && (
+                                <option value={scoreData.team1.team_id}>
+                                    Team {scoreData.team1.team_id} - {scoreData.team1.name}
+                                </option>
+                            )}
+                            {scoreData?.team2?.team_id && (
+                                <option value={scoreData.team2.team_id}>
+                                    Team {scoreData.team2.team_id} - {scoreData.team2.name}
+                                </option>
+                            )}
+                        </select>
+                    </div>
+                    <div style={{ marginTop: '1rem', marginBottom: '1rem' }}>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+                            Walkover Reason (Optional):
+                        </label>
+                        <TextField
+                            fullWidth
+                            multiline
+                            rows={3}
+                            placeholder="e.g., Opponent did not show up, Injury, etc."
+                            value={walkoverData.reason}
+                            onChange={(e) => setWalkoverData({ ...walkoverData, reason: e.target.value })}
+                        />
+                    </div>
+                </DialogContent>
+                <DialogActions>
+                    <Button
+                        onClick={() => setShowWalkoverModal(false)}
+                        style={{ color: '#F28C28' }}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={handleWalkoverSubmit}
+                        style={{ backgroundColor: '#ff9800', color: 'white' }}
+                        disabled={!walkoverData.winnerTeamId}
+                    >
+                        Record Walkover
+                    </Button>
                 </DialogActions>
             </Dialog>
         </div>
@@ -326,7 +494,7 @@ const TeamCard = ({ team, players = [], onScoreChange, onReset, formik, teamName
                 ))}
             </div>
         </div>
-        
+
         <TextField
             size="small"
             className={stl.score}
@@ -335,7 +503,7 @@ const TeamCard = ({ team, players = [], onScoreChange, onReset, formik, teamName
             error={Boolean(formik.errors[teamName])}
             helperText={formik.errors[teamName]}
         />
-        
+
         <div className={stl.scoreControls}>
             <button type="button" onClick={() => onScoreChange(1)}>+1</button>
             <button type="button" onClick={() => onScoreChange(-1)}>-1</button>
